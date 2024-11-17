@@ -49,7 +49,7 @@ if (
       coverImage: coverImage?.url || "",
       email,
       username: username.toLowerCase(),
-      password,
+      password
     })
 
     const createdUser = await User.findById(user._id).select(
@@ -66,4 +66,40 @@ if (
 
 })
 
-export {registerUser}
+const loginUser =asyncHandler(async (req,res)=>{
+   //req -> body
+   //username/email exists?
+   // find user
+   //check password
+   // access and refresh token
+   //send cookies
+   //send response that successfully logged in
+
+   const {email, username, password}= req.body
+
+   if(!username ||!email){
+      throw new apiError(400,"Username or email is required")
+   }
+
+  const user = User.findOne({
+      $or:[{username},{email}]
+      // $ used for mongodb operators
+   })
+
+   if(!user){
+      throw new apiError(401, "User with this username/email does not exist")
+   }
+
+  const isPassValid = await user.isPasswordCorrect(password)
+
+  if(!isPassValid){
+   throw new apiError(401,"Invalid user credentials")
+  }
+
+
+})
+
+export {
+   registerUser,
+    loginUser
+}
