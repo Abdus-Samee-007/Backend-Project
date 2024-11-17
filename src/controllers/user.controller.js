@@ -4,6 +4,26 @@ import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import {apiResponse} from '../utils/apiResponse.js'
 
+const generateAccessAndRefreshTokens = async(userId)=>
+   {
+   try {
+      // user token and refresh token are generated using the userId
+      const user = await User.findById(userId)
+     const accessToken = user.generateAccessToken()
+     const refreshToken = user.generateRefreshToken()
+
+      user.refreshToken = refreshToken
+      await user.save({ validateBeforeSave: false})
+      // refresh token gets saved in database
+
+      return {accessToken, refreshToken}
+
+   } catch (error) {
+      throw new apiError(500,"Something went wrong while generating Access and Refresh Token")
+      
+   }
+}
+
 const registerUser = asyncHandler( async(req,res) =>{
   
    const { fullName, email, username, password } = req.body
@@ -77,7 +97,7 @@ const loginUser =asyncHandler(async (req,res)=>{
 
    const {email, username, password}= req.body
 
-   if(!username ||!email){
+   if(!(username ||email)){
       throw new apiError(400,"Username or email is required")
    }
 
@@ -96,6 +116,7 @@ const loginUser =asyncHandler(async (req,res)=>{
    throw new apiError(401,"Invalid user credentials")
   }
 
+  const {accessToken,refreshToken} = await generateAccessAndRefreshTokens(user._id)
 
 })
 
