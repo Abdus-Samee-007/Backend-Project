@@ -3,6 +3,7 @@ import {apiError} from '../utils/apiError.js'
 import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import {apiResponse} from '../utils/apiResponse.js'
+import { response } from 'express';
 
 const generateAccessAndRefreshTokens = async(userId)=>
    {
@@ -117,6 +118,25 @@ const loginUser =asyncHandler(async (req,res)=>{
   }
 
   const {accessToken,refreshToken} = await generateAccessAndRefreshTokens(user._id)
+
+  const loggedInUser = await User.findById(user._id).
+  select("-password -refreshToken")
+
+  const options={
+   httpOnly:true,
+   secure:true
+  }
+
+  return res
+  .status(200)
+  .cookie("accessToken",accessToken,options)
+  .cookie("refreshToken",refreshToken,options)
+  .json(
+   new apiResponse(200,{
+      user: loggedInUser,accessToken,refreshToken
+   },
+   "User Logged In Successfully")
+  )
 
 })
 
