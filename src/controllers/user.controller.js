@@ -1,9 +1,8 @@
-import { asyncHandler } from '../utils/asyncHandler.js';
-import {apiError} from '../utils/apiError.js'
+import { asyncHandler } from "../utils/asyncHandler.js";
+import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
-import {uploadOnCloudinary} from '../utils/cloudinary.js'
-import {apiResponse} from '../utils/apiResponse.js'
-import { response } from 'express';
+import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {ApiResponse} from "../utils/ApiResponse.js"
 
 const generateAccessAndRefreshTokens = async(userId)=>
    {
@@ -20,7 +19,7 @@ const generateAccessAndRefreshTokens = async(userId)=>
       return {accessToken, refreshToken}
 
    } catch (error) {
-      throw new apiError(500,"Something went wrong while generating Access and Refresh Token")
+      throw new ApiError(500,"Something went wrong while generating Access and Refresh Token")
       
    }
 }
@@ -29,13 +28,13 @@ const registerUser = asyncHandler( async(req,res) =>{
   
    const { fullName, email, username, password } = req.body
 if (fullName === ""){
-   throw new apiError(400, "Full name is required")
+   throw new ApiError(400, "Full name is required")
 }
  // can do each one separately or use the some() function
 if (
-     [fullName, email, username, password].some((field)=> field?.trim()=== "")
+     [email, username, password].some((field)=> field?.trim()=== "")
    ) {
-      throw new apiError(400, "All fields are required")
+      throw new ApiError(400, "All fields are required")
    }
  
    const existedUser = await User.findOne({
@@ -43,7 +42,7 @@ if (
    })
 
    if (existedUser){
-      throw new apiError(409, "User with email or username already exists")
+      throw new ApiError(409, "User with email or username already exists")
    }
 
    const avatarLocalPath = req.files?.avatar[0]?.path;
@@ -54,14 +53,14 @@ if (
    }
 
    if (!avatarLocalPath) {
-      throw new apiError(400, "Avatar is required")
+      throw new ApiError(400, "Avatar is required")
    }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     if(!avatar){
-      throw new apiError(400, "Avatar file is required")
+      throw new ApiError(400, "Avatar file is required")
     }
 
     const user = await User.create({
@@ -78,16 +77,16 @@ if (
     )
 
     if(!createdUser){
-      throw new apiError(500, "Failed to create user")
+      throw new ApiError(500, "Failed to create user")
     }
 
     return res.status(201).json(
-      new apiResponse(200,createdUser,"User Registered Successfully")
+      new ApiResponse(200,createdUser,"User Registered Successfully")
     )
 
 })
 
-const loginUser =asyncHandler(async (req,res)=>{
+const loginUser = asyncHandler(async (req,res)=>{
    //req -> body
    //username/email exists?
    // find user
@@ -98,23 +97,24 @@ const loginUser =asyncHandler(async (req,res)=>{
 
    const {email, username, password}= req.body
 
-   if(!(username ||email)){
-      throw new apiError(400,"Username or email is required")
+   if(!username && !email){
+      throw new ApiError(400,"Username or email is required")
    }
 
-  const user = User.findOne({
+  const user =await User.findOne({
       $or:[{username},{email}]
       // $ used for mongodb operators
    })
 
    if(!user){
-      throw new apiError(401, "User with this username/email does not exist")
+      throw new ApiError(401, "User with this username/email does not exist")
    }
-
-  const isPassValid = await user.isPasswordCorrect(password)
+   console.log(user.ispasswordCorrect);
+   
+   const isPassValid = await user.ispasswordCorrect(password)
 
   if(!isPassValid){
-   throw new apiError(401,"Invalid user credentials")
+   throw new ApiError(401,"Invalid user credentials")
   }
 
   const {accessToken,refreshToken} = await generateAccessAndRefreshTokens(user._id)
@@ -132,7 +132,7 @@ const loginUser =asyncHandler(async (req,res)=>{
   .cookie("accessToken",accessToken,options)
   .cookie("refreshToken",refreshToken,options)
   .json(
-   new apiResponse(200,{
+   new ApiResponse(200,{
       user: loggedInUser,accessToken,refreshToken
    },
    "User Logged In Successfully")
@@ -162,7 +162,7 @@ const logoutUser = asyncHandler(async (req,res)=>{
   .status(200)
   .clearCookie("accessToken",options)
   .clearCookie("refreshToken",options)
-  .json(new apiResponse(200,{},"User Logged Out Successfully"))
+  .json(new ApiResponse(200,{},"User Logged Out Successfully"))
 })
 
 export {
