@@ -9,8 +9,8 @@ const generateAccessAndRefreshTokens = async(userId)=>
    try {
       // user token and refresh token are generated using the userId
       const user = await User.findById(userId)
-     const accessToken = user.generateAccessToken()
-     const refreshToken = user.generateRefreshToken()
+     const accessToken = await user.generateAccessToken()
+     const refreshToken = await user.generateRefreshToken()
 
       user.refreshToken = refreshToken
       await user.save({ validateBeforeSave: false})
@@ -96,6 +96,7 @@ const loginUser = asyncHandler(async (req,res)=>{
    //send response that successfully logged in
 
    const {email, username, password}= req.body
+   // console.log(email);
 
    if(!username && !email){
       throw new ApiError(400,"Username or email is required")
@@ -140,12 +141,12 @@ const loginUser = asyncHandler(async (req,res)=>{
 
 })
 
-const logoutUser = asyncHandler(async (req,res)=>{
+const logoutUser = asyncHandler(async(req,res)=>{
   await User.findByIdAndUpdate(
    req.user._id,
    {
-      $set:{
-         refreshToken: undefined
+      $unset:{
+         refreshToken: 1
       }
    },
    {
@@ -167,6 +168,6 @@ const logoutUser = asyncHandler(async (req,res)=>{
 
 export {
    registerUser,
-    loginUser,
-    logoutUser
+   loginUser,
+   logoutUser
 }
