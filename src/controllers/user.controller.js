@@ -219,7 +219,7 @@ try{
 })
 
 
-const changeCurrentUser = asyncHandler(async(req,res)=>{
+const changeCurrentPassword = asyncHandler(async(req,res)=>{
    const{oldPassword, newPassword} = req.body
    // newpassword,confPassword would be present
    // if(!(oldPassword === newPassword)){
@@ -452,7 +452,7 @@ export {
    loginUser,
    logoutUser,
    refreshAccessToken,
-   changeCurrentUser,
+   changeCurrentPassword,
    getCurrentUser,
    updateAccountDetails,
    updateUserAvatar,
